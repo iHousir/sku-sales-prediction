@@ -23,17 +23,15 @@ def example_advanced_1_custom_preprocessing():
     print("高级示例1: 自定义数据预处理流程")
     print("=" * 80)
 
-    # 创建示例数据
+    # 创建示例数据（只包含必需字段）
     dates = pd.date_range('2023-01-01', periods=300, freq='D')
     sample_data = pd.DataFrame({
         '下单时间': dates,
         '数量': [150 + i % 100 + np.random.randint(-20, 20) for i in range(300)],
         '送货专卖店卡号': ['店铺001'] * 300,
-        '货品名称': ['产品A'] * 300,
+        '货品代码': ['SKU001'] * 300,
         '省': ['广东省'] * 300,
         '市': ['深圳市'] * 300,
-        '货品代码': ['SKU001'] * 300,
-        '送货地址': ['深圳市南山区'] * 300,
         '配送方式': ['快递'] * 300,
         '月份': dates.to_period('M').astype(str)
     })
@@ -122,28 +120,26 @@ def example_advanced_3_batch_forecast():
 
     all_data = []
     stores = ['店铺A', '店铺B', '店铺C']
-    products = ['产品X', '产品Y', '产品Z']
+    product_codes = ['SKU_X', 'SKU_Y', 'SKU_Z']
 
     for store in stores:
-        for product in products:
+        for product_code in product_codes:
             for date in dates:
                 # 为每个组合生成不同的销量模式
-                base = hash(store + product) % 100 + 50
+                base = hash(store + product_code) % 100 + 50
                 trend = (dates.get_loc(date) * 0.1)
                 seasonal = np.sin(dates.get_loc(date) / 7) * 20
                 noise = np.random.normal(0, 10)
 
-                quantity = max(0, base + trend + seasonal + noise)
+                quantity = base + trend + seasonal + noise
 
                 all_data.append({
                     '下单时间': date,
                     '数量': quantity,
                     '送货专卖店卡号': store,
-                    '货品名称': product,
+                    '货品代码': product_code,
                     '省': '广东省',
                     '市': '深圳市',
-                    '货品代码': f'SKU_{product}',
-                    '送货地址': f'{store}地址',
                     '配送方式': '快递',
                     '月份': date.to_period('M')
                 })
@@ -203,17 +199,15 @@ def example_advanced_5_export_and_visualize():
     print("高级示例5: 导出和可视化预测结果")
     print("=" * 80)
 
-    # 创建示例数据
+    # 创建示例数据（只包含必需字段）
     dates = pd.date_range('2023-01-01', periods=180, freq='D')
     sample_data = pd.DataFrame({
         '下单时间': dates,
         '数量': [150 + i * 0.3 + np.sin(i / 7) * 20 for i in range(180)],
         '送货专卖店卡号': ['店铺001'] * 180,
-        '货品名称': ['产品A'] * 180,
+        '货品代码': ['SKU001'] * 180,
         '省': ['广东省'] * 180,
         '市': ['深圳市'] * 180,
-        '货品代码': ['SKU001'] * 180,
-        '送货地址': ['深圳市南山区'] * 180,
         '配送方式': ['快递'] * 180,
         '月份': dates.to_period('M').astype(str)
     })

@@ -17,18 +17,29 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 os.makedirs(MODEL_CACHE_DIR, exist_ok=True)
 
 # 数据字段配置
-DATA_COLUMNS = {
+# 必需字段
+REQUIRED_COLUMNS = {
     "date": "下单时间",  # 日期字段
-    "quantity": "数量",  # 销量字段
+    "quantity": "数量",  # 销量字段（可以为负数，表示退货）
     "store_id": "送货专卖店卡号",  # 店铺ID
-    "product_code": "货品代码",  # 产品代码
-    "product_name": "货品名称",  # 产品名称
+    "product_code": "货品代码",  # 产品代码（作为产品唯一标识）
     "province": "省",  # 省份
     "city": "市",  # 城市
-    "delivery_address": "送货地址",
-    "delivery_method": "配送方式",
-    "month": "月份"
 }
+
+# 可选字段（如果数据中不存在这些字段，系统会自动跳过）
+OPTIONAL_COLUMNS = {
+    "product_name": "货品名称",  # 产品名称（可选）
+    "delivery_address": "送货地址",  # 送货地址（可选）
+    "delivery_method": "配送方式",  # 配送方式（可选）
+    "month": "月份"  # 月份（可选）
+}
+
+# 所有字段的合并（向后兼容）
+DATA_COLUMNS = {**REQUIRED_COLUMNS, **OPTIONAL_COLUMNS}
+
+# 产品标识字段 - 用于聚合和识别产品
+PRODUCT_ID_FIELD = "product_code"  # 使用货品代码作为产品唯一标识
 
 # 时间粒度配置
 TIME_GRANULARITIES = {

@@ -24,17 +24,15 @@ def example_1_basic_forecast():
     data_path = "data/sample/sales_data.csv"
 
     # 或者使用示例DataFrame
-    # 创建示例数据
+    # 创建示例数据（只包含必需字段）
     dates = pd.date_range('2023-01-01', periods=365, freq='D')
     sample_data = pd.DataFrame({
         '下单时间': dates,
         '数量': [100 + i % 50 + (i % 7) * 10 for i in range(365)],
         '送货专卖店卡号': ['店铺001'] * 365,
-        '货品名称': ['产品A'] * 365,
+        '货品代码': ['SKU001'] * 365,
         '省': ['广东省'] * 365,
         '市': ['深圳市'] * 365,
-        '货品代码': ['SKU001'] * 365,
-        '送货地址': ['深圳市南山区'] * 365,
         '配送方式': ['快递'] * 365,
         '月份': dates.to_period('M').astype(str)
     })
@@ -74,17 +72,15 @@ def example_2_multi_granularity():
     print("示例2: 多时间粒度预测 - 按省份预测")
     print("=" * 80)
 
-    # 创建示例数据
+    # 创建示例数据（只包含必需字段）
     dates = pd.date_range('2023-01-01', periods=180, freq='D')
     sample_data = pd.DataFrame({
         '下单时间': dates,
         '数量': [200 + i % 100 for i in range(180)],
         '送货专卖店卡号': ['店铺002'] * 180,
-        '货品名称': ['产品B'] * 180,
+        '货品代码': ['SKU002'] * 180,
         '省': ['北京市'] * 180,
         '市': ['北京市'] * 180,
-        '货品代码': ['SKU002'] * 180,
-        '送货地址': ['北京市朝阳区'] * 180,
         '配送方式': ['自提'] * 180,
         '月份': dates.to_period('M').astype(str)
     })
@@ -118,17 +114,15 @@ def example_3_ensemble_forecast():
     print("示例3: 使用集成模型提高预测准确性")
     print("=" * 80)
 
-    # 创建示例数据
+    # 创建示例数据（只包含必需字段）
     dates = pd.date_range('2023-01-01', periods=200, freq='D')
     sample_data = pd.DataFrame({
         '下单时间': dates,
         '数量': [150 + i % 80 + (i % 30) * 5 for i in range(200)],
         '送货专卖店卡号': ['店铺003'] * 200,
-        '货品名称': ['产品C'] * 200,
+        '货品代码': ['SKU003'] * 200,
         '省': ['上海市'] * 200,
         '市': ['上海市'] * 200,
-        '货品代码': ['SKU003'] * 200,
-        '送货地址': ['上海市浦东新区'] * 200,
         '配送方式': ['快递'] * 200,
         '月份': dates.to_period('M').astype(str)
     })
@@ -158,17 +152,15 @@ def example_4_all_dimensions():
 
     data_list = []
     for store in ['店铺A', '店铺B']:
-        for product in ['产品X', '产品Y']:
+        for product_code in ['SKU_X', 'SKU_Y']:
             for date in dates:
                 data_list.append({
                     '下单时间': date,
                     '数量': np.random.randint(50, 200),
                     '送货专卖店卡号': store,
-                    '货品名称': product,
+                    '货品代码': product_code,
                     '省': '广东省',
                     '市': '深圳市' if store == '店铺A' else '广州市',
-                    '货品代码': f'SKU_{product}',
-                    '送货地址': f'{store}地址',
                     '配送方式': '快递',
                     '月份': date.to_period('M')
                 })
@@ -196,17 +188,15 @@ def example_5_custom_models():
     print("示例5: 只使用特定的预测模型")
     print("=" * 80)
 
-    # 创建示例数据
+    # 创建示例数据（只包含必需字段）
     dates = pd.date_range('2023-01-01', periods=120, freq='D')
     sample_data = pd.DataFrame({
         '下单时间': dates,
         '数量': [100 + i * 0.5 + np.sin(i / 7) * 20 for i in range(120)],
         '送货专卖店卡号': ['店铺004'] * 120,
-        '货品名称': ['产品D'] * 120,
+        '货品代码': ['SKU004'] * 120,
         '省': ['江苏省'] * 120,
         '市': ['南京市'] * 120,
-        '货品代码': ['SKU004'] * 120,
-        '送货地址': ['南京市玄武区'] * 120,
         '配送方式': ['自提'] * 120,
         '月份': dates.to_period('M').astype(str)
     })

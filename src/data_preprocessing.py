@@ -11,8 +11,9 @@ import warnings
 warnings.filterwarnings('ignore')
 
 from src.config import (
-    DATA_COLUMNS, TIME_GRANULARITIES, AGGREGATION_DIMENSIONS,
-    DEFAULT_FORECAST_CONFIG
+    DATA_COLUMNS, REQUIRED_COLUMNS, OPTIONAL_COLUMNS,
+    TIME_GRANULARITIES, AGGREGATION_DIMENSIONS,
+    DEFAULT_FORECAST_CONFIG, PRODUCT_ID_FIELD
 )
 from src.utils import fill_missing_dates, detect_outliers
 
@@ -59,18 +60,29 @@ class DataPreprocessor:
 
     def validate_columns(self) -> bool:
         """
-        验证数据列是否完整
+        验证数据列是否完整（只验证必需字段）
 
         Returns:
             是否验证通过
         """
-        required_cols = list(DATA_COLUMNS.values())
+        # 只验证必需字段
+        required_cols = list(REQUIRED_COLUMNS.values())
         missing_cols = [col for col in required_cols if col not in self.raw_data.columns]
 
         if missing_cols:
             logger.error(f"缺少必需的列: {missing_cols}")
             logger.info(f"当前数据列: {list(self.raw_data.columns)}")
             return False
+
+        # 检查可选字段
+        optional_cols = list(OPTIONAL_COLUMNS.values())
+        existing_optional = [col for col in optional_cols if col in self.raw_data.columns]
+        missing_optional = [col for col in optional_cols if col not in self.raw_data.columns]
+
+        if existing_optional:
+            logger.info(f"找到可选字段: {existing_optional}")
+        if missing_optional:
+            logger.info(f"缺少可选字段（将跳过）: {missing_optional}")
 
         logger.info("数据列验证通过")
         return True
@@ -99,23 +111,41 @@ class DataPreprocessor:
         # 确保数量是数值类型
         quantity_col = DATA_COLUMNS['quantity']
         df[quantity_col] = pd.to_numeric(df[quantity_col], errors='coerce')
+
+        # 移除数量为NaN的行
+        before_count = len(df)
         df = df.dropna(subset=[quantity_col])
+        if len(df) < before_count:
+            logger.info(f"移除数量无效行: {before_count - len(df)} 行")
 
-        # 移除负数销量
-        df = df[df[quantity_col] >= 0]
+        # 注意：保留负数销量（可能表示退货等情况）
+        logger.info(f"数据包含负数销量记录: {(df[quantity_col] < 0).sum()} 条")
 
-        # 处理异常值
+        # 处理异常值（可选）
         if remove_outliers:
             original_count = len(df)
-            outliers = detect_outliers(df[quantity_col])
-            df = df[~outliers]
-            logger.info(f"移除异常值: {original_count - len(df)} 行")
+            # 只对正数销量检测异常值
+            positive_mask = df[quantity_col] > 0
+            if positive_mask.sum() > 0:
+                outliers = detect_outliers(df.loc[positive_mask, quantity_col])
+                # 创建一个与df索引对齐的outliers series
+                outliers_full = pd.Series(False, index=df.index)
+                outliers_full.loc[positive_mask] = outliers
+                df = df[~outliers_full]
+                logger.info(f"移除异常值: {original_count - len(df)} 行")
 
-        # 填充缺失的分类字段
-        for col in [DATA_COLUMNS['store_id'], DATA_COLUMNS['product_name'],
-                    DATA_COLUMNS['province'], DATA_COLUMNS['city']]:
+        # 填充缺失的必需分类字段
+        required_cat_fields = ['store_id', 'product_code', 'province', 'city']
+        for field in required_cat_fields:
+            col = DATA_COLUMNS[field]
             if col in df.columns:
                 df[col] = df[col].fillna('Unknown')
+
+        # 填充存在的可选分类字段
+        optional_cat_fields = ['product_name', 'delivery_address', 'delivery_method']
+        for field in optional_cat_fields:
+            if field in DATA_COLUMNS and DATA_COLUMNS[field] in df.columns:
+                df[DATA_COLUMNS[field]] = df[DATA_COLUMNS[field]].fillna('Unknown')
 
         logger.info(f"数据清洗完成，剩余 {len(df)} 行")
         self.processed_data = df
@@ -134,7 +164,7 @@ class DataPreprocessor:
         Args:
             df: 数据框
             dimension: 聚合维度 ('store_id', 'province', 'city')
-            product_col: 产品列名 (使用产品名称)
+            product_col: 产品列名 (使用货品代码作为产品标识)
             time_granularity: 时间粒度 ('daily', 'weekly', 'monthly')
 
         Returns:
@@ -198,7 +228,8 @@ class DataPreprocessor:
         if min_samples is None:
             min_samples = DEFAULT_FORECAST_CONFIG['min_train_samples']
 
-        product_col = DATA_COLUMNS['product_name']
+        # 使用货品代码作为产品标识
+        product_col = DATA_COLUMNS[PRODUCT_ID_FIELD]
 
         # 聚合数据
         grouped_data = self.aggregate_by_dimension(
@@ -233,6 +264,7 @@ class DataPreprocessor:
             df = self.processed_data if self.processed_data is not None else self.raw_data
 
         quantity_col = DATA_COLUMNS['quantity']
+        product_col = DATA_COLUMNS[PRODUCT_ID_FIELD]
 
         summary = {
             "总记录数": len(df),
@@ -242,9 +274,10 @@ class DataPreprocessor:
             "销量标准差": df[quantity_col].std(),
             "最小销量": df[quantity_col].min(),
             "最大销量": df[quantity_col].max(),
-            "唯一产品数": df[DATA_COLUMNS['product_name']].nunique(),
+            "唯一产品数": df[product_col].nunique(),
             "唯一店铺数": df[DATA_COLUMNS['store_id']].nunique(),
-            "时间跨度": f"{df[DATA_COLUMNS['date']].min()} 至 {df[DATA_COLUMNS['date']].max()}"
+            "时间跨度": f"{df[DATA_COLUMNS['date']].min()} 至 {df[DATA_COLUMNS['date']].max()}",
+            "负数销量记录数": (df[quantity_col] < 0).sum()
         }
 
         return pd.Series(summary)

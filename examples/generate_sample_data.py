@@ -32,17 +32,17 @@ def generate_sample_data(
 
     # 店铺和产品配置
     stores = [
-        {'id': 'STORE001', 'name': '旗舰店', 'province': '广东省', 'city': '深圳市', 'district': '南山区'},
-        {'id': 'STORE002', 'name': '华南分店', 'province': '广东省', 'city': '广州市', 'district': '天河区'},
-        {'id': 'STORE003', 'name': '华东分店', 'province': '上海市', 'city': '上海市', 'district': '浦东新区'},
+        {'id': 'STORE001', 'province': '广东省', 'city': '深圳市'},
+        {'id': 'STORE002', 'province': '广东省', 'city': '广州市'},
+        {'id': 'STORE003', 'province': '上海市', 'city': '上海市'},
     ][:num_stores]
 
     products = [
-        {'code': 'SKU001', 'name': '经典款T恤', 'base_price': 100},
-        {'code': 'SKU002', 'name': '时尚连衣裙', 'base_price': 200},
-        {'code': 'SKU003', 'name': '运动鞋', 'base_price': 300},
-        {'code': 'SKU004', 'name': '休闲裤', 'base_price': 150},
-        {'code': 'SKU005', 'name': '针织衫', 'base_price': 180},
+        {'code': 'SKU001', 'base_price': 100},
+        {'code': 'SKU002', 'base_price': 200},
+        {'code': 'SKU003', 'base_price': 300},
+        {'code': 'SKU004', 'base_price': 150},
+        {'code': 'SKU005', 'base_price': 180},
     ][:num_products]
 
     delivery_methods = ['快递', '自提', '同城配送']
@@ -83,7 +83,7 @@ def generate_sample_data(
                 noise = np.random.normal(0, 10)
 
                 # 计算销量
-                quantity = max(0, int(
+                quantity = int(
                     store_factor +
                     product_base +
                     trend +
@@ -91,22 +91,24 @@ def generate_sample_data(
                     monthly_seasonal +
                     yearly_seasonal +
                     noise
-                ))
+                )
 
                 # 特殊事件（促销日）
                 if day_of_month == 18:  # 每月18日促销
                     quantity = int(quantity * 1.5)
 
-                # 生成记录
+                # 模拟退货（约5%的概率出现负数销量）
+                if np.random.random() < 0.05:
+                    quantity = -abs(int(np.random.normal(20, 10)))
+
+                # 生成记录（只包含必需字段）
                 record = {
                     '下单时间': date.strftime('%Y-%m-%d'),
                     '数量': quantity,
                     '送货专卖店卡号': store['id'],
-                    '货品名称': product['name'],
+                    '货品代码': product['code'],
                     '省': store['province'],
                     '市': store['city'],
-                    '货品代码': product['code'],
-                    '送货地址': f"{store['province']}{store['city']}{store['district']}",
                     '配送方式': np.random.choice(delivery_methods),
                     '月份': date.strftime('%Y-%m')
                 }
@@ -126,8 +128,9 @@ def generate_sample_data(
     print(f"  总记录数: {len(df):,}")
     print(f"  日期范围: {df['下单时间'].min()} 至 {df['下单时间'].max()}")
     print(f"  店铺数: {df['送货专卖店卡号'].nunique()}")
-    print(f"  产品数: {df['货品名称'].nunique()}")
+    print(f"  产品数: {df['货品代码'].nunique()}")
     print(f"  总销量: {df['数量'].sum():,}")
+    print(f"  负数销量记录: {(df['数量'] < 0).sum()}")
     print(f"\n数据预览:")
     print(df.head(10))
 
