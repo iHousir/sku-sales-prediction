@@ -69,15 +69,39 @@ def main():
 
     # 2. 加载数据
     print_section("1/5 数据加载与验证")
+
+    # 尝试不同的编码方式加载CSV文件
+    import pandas as pd
+    df = None
+    encodings = ['gbk', 'gb2312', 'utf-8', 'utf-8-sig', 'gb18030', 'latin1']
+
+    for encoding in encodings:
+        try:
+            print(f"尝试使用 {encoding} 编码读取文件...", end=' ')
+            df = pd.read_csv(DATA_PATH, encoding=encoding)
+            print(f"✓ 成功！")
+            break
+        except Exception as e:
+            print(f"✗ 失败")
+            continue
+
+    if df is None:
+        print(f"\n✗ 错误：无法读取CSV文件，尝试了所有常见编码")
+        print("\n建议：")
+        print("1. 用Excel打开CSV文件，另存为 UTF-8 编码的CSV文件")
+        print("2. 或者用记事本打开，另存为时选择 UTF-8 编码")
+        return 1
+
+    # 使用读取的DataFrame创建预测器
     try:
-        forecaster = SalesForecaster(data_path=DATA_PATH, auto_clean=True)
-        print("✓ 数据加载成功")
+        forecaster = SalesForecaster(df=df, auto_clean=True)
+        print("✓ 数据验证成功")
     except Exception as e:
-        print(f"✗ 数据加载失败: {str(e)}")
+        print(f"✗ 数据验证失败: {str(e)}")
         print("\n常见问题：")
-        print("1. CSV文件编码问题 - 尝试用UTF-8或GBK编码保存")
-        print("2. 缺少必需字段 - 确保包含：下单时间、数量、送货专卖店卡号、货品代码、省、市")
-        print("3. 日期格式问题 - 确保日期格式正确（如：2023-01-01）")
+        print("1. 缺少必需字段 - 确保包含：下单时间、数量、送货专卖店卡号、货品代码、省、市")
+        print("2. 日期格式问题 - 确保日期格式正确（如：2023-01-01）")
+        print(f"\n当前数据列: {list(df.columns)}")
         return 1
 
     # 3. 显示数据摘要
