@@ -14,22 +14,22 @@ import sys
 # 数据文件路径
 DATA_PATH = r"E:\03 Python xm-1\嘉兴数据V1.csv"
 
-# 快速预测配置 - 只选择最重要的预测任务
+# 预测配置 - 按省份输出每个产品的分月销售预测
 FORECAST_CONFIG = {
-    # 选择要预测的维度（建议只选择最重要的一个）
-    "forecast_by_store": True,      # 按店铺预测 ← 通常最重要
-    "forecast_by_province": False,  # 关闭省份预测（加快速度）
-    "forecast_by_city": False,      # 关闭城市预测（加快速度）
+    # 选择要预测的维度 - 按省份
+    "forecast_by_store": False,     # 不预测店铺
+    "forecast_by_province": True,   # ✓ 按省份预测
+    "forecast_by_city": False,      # 不预测城市
 
-    # 选择要预测的时间粒度（建议只选1-2个）
-    "forecast_daily": True,         # 预测每日
-    "forecast_weekly": False,       # 关闭每周预测（加快速度）
-    "forecast_monthly": False,      # 关闭每月预测（加快速度）
+    # 选择要预测的时间粒度 - 按月
+    "forecast_daily": False,        # 不预测每日
+    "forecast_weekly": False,       # 不预测每周
+    "forecast_monthly": True,       # ✓ 按月预测
 
-    # 预测时长（可以减少以加快速度）
-    "daily_days": 30,               # 每日预测天数
-    "weekly_weeks": 12,             # 每周预测周数
-    "monthly_months": 6,            # 每月预测月数
+    # 预测时长
+    "daily_days": 30,               # 每日预测天数（未使用）
+    "weekly_weeks": 12,             # 每周预测周数（未使用）
+    "monthly_months": 6,            # 每月预测6个月
 
     # 模型配置 - 只使用最快的2个模型
     "use_ensemble": False,          # 关闭集成模型（加快速度）
